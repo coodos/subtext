@@ -59,7 +59,7 @@ class ParseAudio:
                 textt = audFile.convertToText()
                 if audFile.convertToText() != None:
                     f.write(f"{self.count}\n{SrtGenerator.convert(subtitle * 5)} --> {SrtGenerator.convert((subtitle * 5) + 5)}\n<font>{textt}</font>\n\n")
-            self.count += 1
+                    self.count += 1
             subtitle += 1
             os.remove(f"aud/{file.split('.')[0]}.flac")
    
