@@ -32,6 +32,7 @@ class ParseAudio:
         os.system(f"ffmpeg -i {rawFile} -ab 160k -ac 2 -ar 44100 -vn audio.wav")
         self.waveFile = "audio.wav"
         self.subtitle = {}
+        self.count = 1
 
     def splitAudio(self):
         try:
@@ -39,44 +40,31 @@ class ParseAudio:
         except FileExistsError:
             shutil.rmtree("aud")
             os.mkdir("aud")
+        try: 
+            os.remove("subtitles.srt")
+        except FileNotFoundError:
+            pass
         os.system(f"ffmpeg -i {self.waveFile} -f segment -segment_time 5 -c copy aud/out%03d.wav")
         
         files = os.listdir("aud/")
 
+        subtitle = 0
         for file in sorted(files):
             flacFile = pydub.AudioSegment.from_wav(f'aud/{file}')
             flacFile.export(f"aud/{file.split('.')[0]}.flac", format = "flac")
             os.remove(f'aud/{file}')
-        
-    def parseAudio(self): 
-        files = os.listdir("aud/")
-        print(files)
-        for file in sorted(files):  
-            audFile = Audio(f'aud/{file}')
-            self.addToSubtitles(files.index(file), audFile.convertToText())
-
-    def addToSubtitles(self, key, value):
-        self.subtitle[key] = value          
-
-    def getSubtitles(self): 
-        return self.subtitle
-
+            audFile = Audio(f"aud/{file.split('.')[0]}.flac")
+            
+            with open("subtitles.srt", "a+") as f:
+                textt = audFile.convertToText()
+                if audFile.convertToText() != None:
+                    f.write(f"{self.count}\n{SrtGenerator.convert(subtitle * 5)} --> {SrtGenerator.convert((subtitle * 5) + 5)}\n<font>{textt}</font>\n\n")
+            self.count += 1
+            subtitle += 1
+            os.remove(f"aud/{file.split('.')[0]}.flac")
+   
+    
 class SrtGenerator(): 
-
-    @staticmethod
-    def generateSrt(subtitles):
-
-        try:
-            os.remove("subtitles.srt")
-        except FileNotFoundError:
-            pass
-        
-        count = 1
-        for subtitle in subtitles:             
-            with open("subtitles.srt", "a+") as f: 
-                if subtitles[subtitle] != None:
-                    f.write(f"{count}\n{SrtGenerator.convert(subtitle * 5)} --> {SrtGenerator.convert((subtitle * 5) + 5)}\n<font>{subtitles[subtitle]}</font>\n\n")
-                    count += 1
     
     @staticmethod
     def convert(seconds): 
@@ -91,6 +79,3 @@ class SrtGenerator():
 
 raw = ParseAudio("subtitles.mp4")
 raw.splitAudio()
-raw.parseAudio()
-subtitles = raw.getSubtitles()
-SrtGenerator.generateSrt(subtitles)
