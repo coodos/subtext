@@ -1,4 +1,4 @@
-# subtext
+# Subtext
 
 > # EPIC PROJECT ALERT!
 
